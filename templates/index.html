@@ -1,0 +1,2060 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Sandwichs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            justify-content: center;
+        }
+
+        .tab-button {
+            padding: 8px 20px;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        /* Style spécifique pour les sous-onglets admin */
+        .admin-sub-button {
+            background: rgba(102, 126, 234, 0.8) !important;
+            color: white !important;
+        }
+
+        .admin-sub-button.active {
+            background: white !important;
+            color: #667eea !important;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sandwichs-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        .sandwich-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sandwich-item:hover {
+            transform: translateX(2px);
+            border-color: #667eea;
+            background: #f0f0f0;
+        }
+
+        .sandwich-item.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .sandwich-info {
+            flex: 1;
+        }
+
+        .sandwich-name {
+            font-weight: bold;
+            font-size: 0.95em;
+            margin-bottom: 2px;
+        }
+
+        .sandwich-ingredients {
+            font-size: 0.75em;
+            color: #666;
+        }
+
+        .sandwich-item.selected .sandwich-ingredients {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .sandwich-prix {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #667eea;
+            margin-left: 10px;
+        }
+
+        .sandwich-item.selected .sandwich-prix {
+            color: white;
+        }
+
+        .selected-sandwichs-section {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .selected-sandwichs-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .selected-sandwich-compact {
+            background: white;
+            padding: 8px;
+            border-radius: 6px;
+            border: 2px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .compact-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .compact-name {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 0.85em;
+        }
+
+        .compact-prix {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .compact-input {
+            padding: 5px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.85em;
+            width: 100%;
+        }
+
+        .compact-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .compact-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .compact-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8em;
+        }
+
+        .compact-checkbox input {
+            width: 16px;
+            height: 16px;
+        }
+
+        .remove-btn-compact {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .remove-btn-compact:hover {
+            background: #c82333;
+        }
+
+        .btn {
+            padding: 10px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102,126,234,0.4);
+        }
+
+        .total-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .total-section h3 {
+            font-size: 1.1em;
+        }
+
+        .total-section .amount {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .message {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            display: none;
+            font-size: 0.9em;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.85em;
+        }
+
+        table th,
+        table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+        }
+
+        table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .status-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .status-badge.paye {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.non-paye {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        .stat-card.non-paye {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .stat-card.paye {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .stat-card.total {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .stat-card h3 {
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .amount {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .filter-section {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group label {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 6px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.85em;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal h3 {
+            margin-bottom: 12px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            justify-content: flex-end;
+        }
+
+        .date-header {
+            background: #f0f0f0;
+            padding: 6px 10px;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 0.9em;
+        }
+
+        .global-checkbox {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .global-checkbox input {
+            width: 18px;
+            height: 18px;
+        }
+
+        .command-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 1.2em;
+        }
+
+        .category-button {
+            padding: 6px 14px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .category-button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .category-button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Styles pour l'impression */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+            }
+
+            h1, .tabs, button {
+                display: none !important;
+            }
+
+            #recap-content {
+                font-size: 14px !important;
+            }
+        }
+
+        /* ===== RESPONSIVE MOBILE ===== */
+        /* Tablettes et petits écrans */
+        @media screen and (max-width: 1024px) {
+            .sandwichs-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .selected-sandwichs-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Smartphones */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            h1 {
+                font-size: 1.3em;
+                margin-bottom: 10px;
+            }
+
+            .tabs {
+                gap: 5px;
+                flex-wrap: wrap;
+            }
+
+            .tab-button {
+                padding: 10px 12px;
+                font-size: 13px;
+                min-height: 44px;
+                flex: 1;
+                min-width: calc(50% - 5px);
+            }
+
+            .tab-content {
+                padding: 10px;
+                border-radius: 8px;
+            }
+
+            h2 {
+                font-size: 1em;
+            }
+
+            /* Grille de sandwichs en 1 colonne sur mobile */
+            .sandwichs-list {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .sandwich-item {
+                padding: 12px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .sandwich-info {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+
+            .sandwich-name {
+                font-size: 1em;
+                margin-bottom: 4px;
+            }
+
+            .sandwich-ingredients {
+                font-size: 0.85em;
+            }
+
+            .sandwich-prix {
+                align-self: flex-end;
+                font-size: 1.2em;
+                margin-left: 0;
+            }
+
+            /* Boutons de catégories wrappables */
+            .category-button {
+                font-size: 12px;
+                padding: 8px 12px;
+            }
+
+            /* Section commandes en 1 colonne */
+            .selected-sandwichs-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .command-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .command-header .btn-primary {
+                width: 100%;
+            }
+
+            #responsable-select {
+                width: 100% !important;
+            }
+
+            /* Formulaires admin full width */
+            .selected-sandwichs-section {
+                padding: 10px;
+            }
+
+            /* Statistiques en 1 colonne */
+            .stats-container {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 12px;
+            }
+
+            .stat-card .amount {
+                font-size: 1.5em;
+            }
+
+            /* Boutons plus grands pour tactile */
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
+                min-height: 44px;
+            }
+
+            .btn-small {
+                padding: 8px 12px;
+                font-size: 0.85em;
+                min-height: 36px;
+            }
+
+            /* Total section responsive */
+            .total-section {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+
+            /* Tables scrollables horizontalement */
+            .tab-content > table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                font-size: 0.75em;
+                min-width: 600px;
+            }
+
+            table th,
+            table td {
+                padding: 6px 4px;
+            }
+
+            /* Actions buttons en colonne sur mobile */
+            .action-buttons {
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            /* Filtres en colonne */
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group select,
+            .filter-group input {
+                width: 100%;
+            }
+
+            /* Modal plus petit */
+            .modal-content {
+                width: 95%;
+                margin: 30% auto;
+                padding: 15px;
+            }
+
+            /* Inputs et selects plus grands pour tactile */
+            .compact-input,
+            input[type="text"],
+            input[type="number"],
+            select,
+            textarea {
+                font-size: 16px !important; /* Évite le zoom automatique sur iOS */
+                min-height: 40px;
+            }
+
+            /* Admin header responsive */
+            #admin-sandwichs > div:first-child,
+            #admin-responsables > div:first-child {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            #admin-sandwichs .btn-primary,
+            #admin-responsables .btn-primary {
+                width: 100%;
+            }
+
+            /* Formulaire admin responsive */
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                width: 100%;
+            }
+        }
+
+        /* Très petits smartphones */
+        @media screen and (max-width: 480px) {
+            h1 {
+                font-size: 1.1em;
+            }
+
+            .tab-button {
+                font-size: 12px;
+                padding: 8px 10px;
+            }
+
+            .sandwich-name {
+                font-size: 0.95em;
+            }
+
+            .category-button {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+
+            table {
+                font-size: 0.7em;
+            }
+
+            .stat-card h3 {
+                font-size: 0.85em;
+            }
+
+            .stat-card .amount {
+                font-size: 1.3em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Commande de sandwiches Tentation</h1>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('commander')">Commander</button>
+            <button class="tab-button" onclick="switchTab('historique')">Historique</button>
+            <button id="recap-tab-button" class="tab-button" onclick="switchTab('recapitulatif')" style="display: none;">Récapitulatif</button>
+            <button class="tab-button" onclick="switchTab('admin')">Admin</button>
+        </div>
+
+        <!-- TAB COMMANDER -->
+        <div id="commander" class="tab-content active">
+            <div id="message" class="message"></div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2>Sandwichs disponibles (cliquez pour ajouter) :</h2>
+                <button class="btn btn-primary" onclick="chargerCommandesDuJour()" style="padding: 8px 20px; font-size: 14px;">Charger les commandes du jour</button>
+            </div>
+
+            <div style="margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 6px;">
+                <button class="category-button active" onclick="filtrerParCategorie('Nos classiques')">Nos classiques</button>
+                <button class="category-button" onclick="filtrerParCategorie('Nos tentations')">Nos tentations</button>
+                <button class="category-button" onclick="filtrerParCategorie('Nos très spéciaux')">Nos très spéciaux</button>
+                <button class="category-button" onclick="filtrerParCategorie('Nos paninis')">Nos paninis</button>
+                <button class="category-button" onclick="filtrerParCategorie('Nos piadina')">Nos piadina</button>
+                <button class="category-button" onclick="filtrerParCategorie('Nos tendances')">Nos tendances</button>
+                <button class="category-button" onclick="filtrerParCategorie('Nos Tentaburgers')">Nos Tentaburgers</button>
+                <button class="category-button" onclick="filtrerParCategorie('Nos croques')">Nos croques</button>
+                <button class="category-button" onclick="filtrerParCategorie('Nos salades')">Nos salades</button>
+                <button class="category-button" onclick="filtrerParCategorie('Nos Pasta\'s')">Nos Pasta's</button>
+                <button class="category-button" onclick="filtrerParCategorie('Propo')">Propo</button>
+                <button class="category-button" onclick="filtrerParCategorie('Boissons')">Boissons</button>
+            </div>
+
+            <div id="sandwichs-list" class="sandwichs-list"></div>
+
+            <div class="selected-sandwichs-section" id="selected-section" style="display: none;">
+                <div class="command-header">
+                    <h2>Commandes du jour <span id="responsable-display" style="font-size: 0.8em; color: #667eea; font-weight: normal;"></span></h2>
+                    <button class="btn btn-primary" onclick="validerCommande()">Valider toutes les commandes</button>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Personne qui commande :</label>
+                    <select id="responsable-select" class="compact-input" style="padding: 8px; width: 250px; font-size: 14px;" onchange="updateResponsableDisplay()">
+                        <option value="">-- Sélectionner --</option>
+                    </select>
+                </div>
+
+                <div id="selected-sandwichs-list" class="selected-sandwichs-grid"></div>
+            </div>
+
+            <div class="total-section" id="total-section" style="display: none;">
+                <h3>Total de la commande :</h3>
+                <div class="amount"><span id="total">0.00</span> €</div>
+            </div>
+        </div>
+
+        <!-- TAB HISTORIQUE -->
+        <div id="historique" class="tab-content">
+            <div class="stats-container">
+                <div class="stat-card non-paye">
+                    <h3>Non payé</h3>
+                    <div class="amount"><span id="stat-non-paye">0.00</span> €</div>
+                </div>
+                <div class="stat-card paye">
+                    <h3>Payé</h3>
+                    <div class="amount"><span id="stat-paye">0.00</span> €</div>
+                </div>
+                <div class="stat-card total">
+                    <h3>Total</h3>
+                    <div class="amount"><span id="stat-total">0.00</span> €</div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-group">
+                    <label>Filtrer :</label>
+                    <select id="filter-statut" onchange="chargerHistorique()">
+                        <option value="tous">Tous</option>
+                        <option value="paye">Payé</option>
+                        <option value="non-paye">Non payé</option>
+                    </select>
+                    <input type="text" id="filter-personne" placeholder="Rechercher par nom..." onkeyup="chargerHistorique()">
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Personne</th>
+                        <th>Sandwich</th>
+                        <th>Prix</th>
+                        <th>Commentaire</th>
+                        <th>Preneur cmde</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="historique-body"></tbody>
+            </table>
+        </div>
+
+        <!-- TAB ADMIN -->
+        <div id="admin" class="tab-content">
+            <div id="admin-message" class="message"></div>
+
+            <div class="tabs" style="margin-bottom: 15px;">
+                <button class="tab-button admin-sub-button active" onclick="switchAdminTab('sandwichs')">Sandwichs</button>
+                <button class="tab-button admin-sub-button" onclick="switchAdminTab('responsables')">Prénoms</button>
+            </div>
+
+            <!-- Sous-tab Sandwichs -->
+            <div id="admin-sandwichs" class="admin-sub-tab" style="display: block;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2>Gestion des Sandwichs</h2>
+                    <button class="btn btn-primary" onclick="afficherFormulaireAjout()">Ajouter un sandwich</button>
+                </div>
+
+            <!-- Formulaire ajout/modification -->
+            <div id="form-sandwich" class="selected-sandwichs-section" style="display: none;">
+                <h3 id="form-title" style="margin-bottom: 15px;">Nouveau sandwich</h3>
+                <div style="display: grid; gap: 12px;">
+                    <div class="form-group">
+                        <label>Nom du sandwich :</label>
+                        <input type="text" id="sandwich-nom" class="compact-input" style="padding: 10px;" placeholder="Ex: SPÉCIAL">
+                    </div>
+                    <div class="form-group">
+                        <label>Ingrédients :</label>
+                        <textarea id="sandwich-ingredients" class="compact-input" style="padding: 10px; min-height: 80px;" placeholder="Ex: Sauce piquante, chorizo, mozzarella..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Prix (€) :</label>
+                        <input type="number" step="0.10" id="sandwich-prix" class="compact-input" style="padding: 10px;" placeholder="Ex: 5.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Catégorie :</label>
+                        <select id="sandwich-categorie" class="compact-input" style="padding: 10px;">
+                            <option value="Nos classiques">Nos classiques</option>
+                            <option value="Nos tentations">Nos tentations</option>
+                            <option value="Nos très spéciaux">Nos très spéciaux</option>
+                            <option value="Nos tendances">Nos tendances</option>
+                            <option value="Nos tentaburgers">Nos tentaburgers</option>
+                            <option value="Nos paninis">Nos paninis</option>
+                            <option value="Nos piadina">Nos piadina</option>
+                            <option value="Nos croques">Nos croques</option>
+                            <option value="Nos salades">Nos salades</option>
+                            <option value="Nos Pasta's">Nos Pasta's</option>
+                            <option value="Propo">Propo</option>
+                            <option value="Boissons">Boissons</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="sauvegarderSandwich()">Sauvegarder</button>
+                        <button class="btn" onclick="annulerFormulaire()" style="background: #6c757d; color: white;">Annuler</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des sandwichs -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Ingrédients</th>
+                        <th style="width: 80px;">Prix</th>
+                        <th style="width: 150px;">Catégorie</th>
+                        <th style="width: 150px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-sandwichs-body"></tbody>
+            </table>
+            </div>
+
+            <!-- Sous-tab Responsables -->
+            <div id="admin-responsables" class="admin-sub-tab" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2>Gestion des Prénoms</h2>
+                    <button class="btn btn-primary" onclick="afficherFormulaireAjoutResponsable()">Ajouter un prénom</button>
+                </div>
+
+                <!-- Formulaire ajout/modification responsable -->
+                <div id="form-responsable" class="selected-sandwichs-section" style="display: none;">
+                    <h3 id="form-title-responsable" style="margin-bottom: 15px;">Nouveau prénom</h3>
+                    <div style="display: grid; gap: 12px;">
+                        <div class="form-group">
+                            <label>Prénom :</label>
+                            <input type="text" id="responsable-nom" class="compact-input" style="padding: 10px;" placeholder="Ex: Michaël">
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary" onclick="sauvegarderResponsable()">Sauvegarder</button>
+                            <button class="btn" onclick="annulerFormulaireResponsable()" style="background: #6c757d; color: white;">Annuler</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Liste des responsables -->
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Prénom</th>
+                            <th style="width: 150px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-responsables-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB RÉCAPITULATIF -->
+        <div id="recapitulatif" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Récapitulatif de commande</h2>
+                <div>
+                    <button class="btn btn-primary" onclick="window.print()" style="margin-right: 10px;">Imprimer</button>
+                    <button class="btn" onclick="switchTab('commander')" style="background: #6c757d; color: white;">Retour</button>
+                </div>
+            </div>
+
+            <div id="recap-content" style="font-size: 16px; line-height: 1.8;">
+                <!-- Contenu généré dynamiquement -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmation -->
+    <div id="password-modal" class="modal">
+        <div class="modal-content">
+            <h3>Confirmation de suppression</h3>
+            <p style="margin-bottom: 12px; font-size: 0.9em;">Entrez le mot de passe pour supprimer cette commande :</p>
+            <input type="password" id="password-input" class="compact-input" style="padding: 8px;">
+            <div class="modal-buttons">
+                <button class="btn-small" onclick="closeModal()" style="background: #6c757d; color: white;">Annuler</button>
+                <button class="btn-small btn-danger" onclick="confirmDelete()">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        let sandwichs = [];
+        let selectedSandwichs = [];
+        let commandeToDelete = null;
+        let responsables = [];
+        let categorieSelectionnee = 'Nos classiques';
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            chargerSandwichs();
+            chargerResponsables();
+        });
+
+        // Changer de tab
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'historique') {
+                chargerHistorique();
+                chargerStats();
+            } else if (tabName === 'admin') {
+                switchAdminTab('sandwichs');
+            }
+        }
+
+        // ===== FONCTIONS ADMIN =====
+        let sandwichEnEdition = null;
+
+        // Afficher le formulaire d'ajout
+        function afficherFormulaireAjout() {
+            sandwichEnEdition = null;
+            document.getElementById('form-title').textContent = 'Nouveau sandwich';
+            document.getElementById('sandwich-nom').value = '';
+            document.getElementById('sandwich-ingredients').value = '';
+            document.getElementById('sandwich-prix').value = '';
+            document.getElementById('sandwich-categorie').value = 'Nos classiques';
+            document.getElementById('form-sandwich').style.display = 'block';
+        }
+
+        // Annuler le formulaire
+        function annulerFormulaire() {
+            document.getElementById('form-sandwich').style.display = 'none';
+            sandwichEnEdition = null;
+        }
+
+        // Charger la liste des sandwichs pour l'admin
+        async function chargerSandwichsAdmin() {
+            try {
+                const response = await fetch(`${API_URL}/sandwichs`);
+                const sandwichsList = await response.json();
+                afficherSandwichsAdmin(sandwichsList);
+            } catch (error) {
+                showAdminMessage('Erreur lors du chargement des sandwichs', 'error');
+                console.error(error);
+            }
+        }
+
+        // Afficher les sandwichs dans le tableau admin
+        function afficherSandwichsAdmin(sandwichsList) {
+            const tbody = document.getElementById('admin-sandwichs-body');
+            tbody.innerHTML = '';
+
+            sandwichsList.forEach(sandwich => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${sandwich.nom}</strong></td>
+                    <td>${sandwich.ingredients}</td>
+                    <td>${sandwich.prix.toFixed(2)} €</td>
+                    <td>${sandwich.categorie || 'Nos classiques'}</td>
+                    <td class="action-buttons">
+                        <button class="btn-small btn-success" onclick="modifierSandwich(${sandwich.id})">Modifier</button>
+                        <button class="btn-small btn-danger" onclick="supprimerSandwich(${sandwich.id})">Supprimer</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Modifier un sandwich
+        async function modifierSandwich(id) {
+            try {
+                const response = await fetch(`${API_URL}/sandwichs`);
+                const sandwichsList = await response.json();
+                const sandwich = sandwichsList.find(s => s.id === id);
+
+                if (sandwich) {
+                    sandwichEnEdition = id;
+                    document.getElementById('form-title').textContent = 'Modifier le sandwich';
+                    document.getElementById('sandwich-nom').value = sandwich.nom || '';
+                    document.getElementById('sandwich-ingredients').value = sandwich.ingredients || '';
+                    document.getElementById('sandwich-prix').value = sandwich.prix || '';
+                    document.getElementById('sandwich-categorie').value = sandwich.categorie || 'Nos classiques';
+                    document.getElementById('form-sandwich').style.display = 'block';
+                }
+            } catch (error) {
+                showAdminMessage('Erreur lors du chargement du sandwich', 'error');
+                console.error(error);
+            }
+        }
+
+        // Sauvegarder un sandwich (ajout ou modification)
+        async function sauvegarderSandwich() {
+            const nom = document.getElementById('sandwich-nom').value.trim();
+            const ingredients = document.getElementById('sandwich-ingredients').value.trim();
+            const prix = parseFloat(document.getElementById('sandwich-prix').value);
+            const categorie = document.getElementById('sandwich-categorie').value;
+
+            if (!nom || !prix) {
+                showAdminMessage('Veuillez remplir le nom et le prix', 'error');
+                return;
+            }
+
+            try {
+                const url = sandwichEnEdition
+                    ? `${API_URL}/sandwichs/${sandwichEnEdition}`
+                    : `${API_URL}/sandwichs`;
+
+                const method = sandwichEnEdition ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nom, ingredients, prix, categorie })
+                });
+
+                const result = await response.json();
+                showAdminMessage(result.message, 'success');
+                annulerFormulaire();
+                chargerSandwichsAdmin();
+
+                // Recharger aussi la liste pour la page Commander
+                chargerSandwichs();
+            } catch (error) {
+                showAdminMessage('Erreur lors de la sauvegarde', 'error');
+                console.error(error);
+            }
+        }
+
+        // Supprimer un sandwich
+        async function supprimerSandwich(id) {
+            const password = prompt('Entrez le mot de passe (1234) pour supprimer ce sandwich :');
+            if (password !== '1234') {
+                alert('Mot de passe incorrect !');
+                return;
+            }
+
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce sandwich ?')) {
+                return;
+            }
+
+            try {
+                await fetch(`${API_URL}/sandwichs/${id}`, { method: 'DELETE' });
+                showAdminMessage('Sandwich supprimé avec succès', 'success');
+                chargerSandwichsAdmin();
+
+                // Recharger aussi la liste pour la page Commander
+                chargerSandwichs();
+            } catch (error) {
+                showAdminMessage('Erreur lors de la suppression', 'error');
+                console.error(error);
+            }
+        }
+
+        // Afficher un message dans l'admin
+        function showAdminMessage(text, type) {
+            const messageDiv = document.getElementById('admin-message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // ===== FONCTIONS ADMIN RESPONSABLES =====
+        let responsableEnEdition = null;
+
+        // Changer de sous-tab dans admin
+        function switchAdminTab(tabName) {
+            // Retirer la classe active de tous les sous-boutons
+            document.querySelectorAll('.admin-sub-button').forEach(btn => btn.classList.remove('active'));
+
+            // Activer le bon bouton
+            if (tabName === 'sandwichs') {
+                document.querySelectorAll('.admin-sub-button')[0].classList.add('active');
+            } else if (tabName === 'responsables') {
+                document.querySelectorAll('.admin-sub-button')[1].classList.add('active');
+            }
+
+            document.querySelectorAll('.admin-sub-tab').forEach(tab => tab.style.display = 'none');
+
+            if (tabName === 'sandwichs') {
+                document.getElementById('admin-sandwichs').style.display = 'block';
+                chargerSandwichsAdmin();
+            } else if (tabName === 'responsables') {
+                document.getElementById('admin-responsables').style.display = 'block';
+                chargerResponsablesAdmin();
+            }
+        }
+
+        // Afficher le formulaire d'ajout responsable
+        function afficherFormulaireAjoutResponsable() {
+            responsableEnEdition = null;
+            document.getElementById('form-title-responsable').textContent = 'Nouveau prénom';
+            document.getElementById('responsable-nom').value = '';
+            document.getElementById('form-responsable').style.display = 'block';
+        }
+
+        // Annuler le formulaire responsable
+        function annulerFormulaireResponsable() {
+            document.getElementById('form-responsable').style.display = 'none';
+            responsableEnEdition = null;
+        }
+
+        // Charger la liste des responsables pour l'admin
+        async function chargerResponsablesAdmin() {
+            try {
+                const response = await fetch(`${API_URL}/responsables`);
+                const responsablesList = await response.json();
+                afficherResponsablesAdmin(responsablesList);
+            } catch (error) {
+                showAdminMessage('Erreur lors du chargement des responsables', 'error');
+                console.error(error);
+            }
+        }
+
+        // Afficher les responsables dans le tableau admin
+        function afficherResponsablesAdmin(responsablesList) {
+            const tbody = document.getElementById('admin-responsables-body');
+            tbody.innerHTML = '';
+
+            responsablesList.forEach(responsable => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${responsable.nom}</strong></td>
+                    <td class="action-buttons">
+                        <button class="btn-small btn-success" onclick="modifierResponsable(${responsable.id})">Modifier</button>
+                        <button class="btn-small btn-danger" onclick="supprimerResponsable(${responsable.id})">Supprimer</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Modifier un responsable
+        async function modifierResponsable(id) {
+            try {
+                const response = await fetch(`${API_URL}/responsables`);
+                const responsablesList = await response.json();
+                const responsable = responsablesList.find(r => r.id === id);
+
+                if (responsable) {
+                    responsableEnEdition = id;
+                    document.getElementById('form-title-responsable').textContent = 'Modifier le prénom';
+                    document.getElementById('responsable-nom').value = responsable.nom;
+                    document.getElementById('form-responsable').style.display = 'block';
+                }
+            } catch (error) {
+                showAdminMessage('Erreur lors du chargement du responsable', 'error');
+                console.error(error);
+            }
+        }
+
+        // Sauvegarder un responsable (ajout ou modification)
+        async function sauvegarderResponsable() {
+            const nom = document.getElementById('responsable-nom').value.trim();
+
+            if (!nom) {
+                showAdminMessage('Veuillez entrer un nom', 'error');
+                return;
+            }
+
+            try {
+                const url = responsableEnEdition
+                    ? `${API_URL}/responsables/${responsableEnEdition}`
+                    : `${API_URL}/responsables`;
+
+                const method = responsableEnEdition ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nom })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    showAdminMessage(result.message, 'success');
+                    annulerFormulaireResponsable();
+                    chargerResponsablesAdmin();
+                } else {
+                    showAdminMessage(result.message, 'error');
+                }
+            } catch (error) {
+                showAdminMessage('Erreur lors de la sauvegarde', 'error');
+                console.error(error);
+            }
+        }
+
+        // Supprimer un responsable
+        async function supprimerResponsable(id) {
+            const password = prompt('Entrez le mot de passe (1234) pour supprimer ce responsable :');
+            if (password !== '1234') {
+                alert('Mot de passe incorrect !');
+                return;
+            }
+
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce responsable ?')) {
+                return;
+            }
+
+            try {
+                await fetch(`${API_URL}/responsables/${id}`, { method: 'DELETE' });
+                showAdminMessage('Responsable supprimé avec succès', 'success');
+                chargerResponsablesAdmin();
+            } catch (error) {
+                showAdminMessage('Erreur lors de la suppression', 'error');
+                console.error(error);
+            }
+        }
+
+        // Charger les sandwichs
+        async function chargerSandwichs() {
+            try {
+                const response = await fetch(`${API_URL}/sandwichs`);
+                sandwichs = await response.json();
+                afficherSandwichs();
+            } catch (error) {
+                console.error('Erreur lors du chargement des sandwichs:', error);
+            }
+        }
+
+        // Afficher les sandwichs
+        function afficherSandwichs() {
+            const list = document.getElementById('sandwichs-list');
+            list.innerHTML = '';
+
+            // Filtrer par catégorie
+            let sandwichsFiltres = sandwichs.filter(s => s.categorie === categorieSelectionnee);
+
+            sandwichsFiltres.forEach(sandwich => {
+                const item = document.createElement('div');
+                item.className = 'sandwich-item';
+                item.onclick = () => ajouterSandwich(sandwich.id);
+
+                item.innerHTML = `
+                    <div class="sandwich-info">
+                        <div class="sandwich-name">${sandwich.nom}</div>
+                        <div class="sandwich-ingredients">${sandwich.ingredients}</div>
+                    </div>
+                    <div class="sandwich-prix">${sandwich.prix.toFixed(2)} €</div>
+                `;
+
+                list.appendChild(item);
+            });
+
+            // Ajouter les informations de suppléments selon la catégorie
+            afficherSupplements(categorieSelectionnee, list);
+        }
+
+        // Afficher les suppléments pour chaque catégorie
+        function afficherSupplements(categorie, list) {
+            let supplementsHTML = '';
+
+            if (categorie === 'Nos paninis') {
+                supplementsHTML = `
+                    <div style="margin-top: 20px; padding: 12px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px;">
+                        <strong style="color: #856404; font-size: 14px;">📋 Suppléments disponibles (à noter dans les commentaires) :</strong>
+                        <div style="margin-top: 8px; font-size: 13px; color: #856404; line-height: 1.6;">
+                            • A partir de 4.50€ / Ciabatta +0.50€
+                        </div>
+                    </div>
+                `;
+            } else if (categorie === 'Nos piadina') {
+                supplementsHTML = `
+                    <div style="margin-top: 20px; padding: 12px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px;">
+                        <strong style="color: #856404; font-size: 14px;">📋 Suppléments disponibles (à noter dans les commentaires) :</strong>
+                        <div style="margin-top: 8px; font-size: 13px; color: #856404; line-height: 1.6;">
+                            • 6.00€ (prix fixe)<br>
+                            • Oeufs, maïs, cornichons, roquette, pesto, miel, noix, raisins, poivrons, olives, pêches, ananas +0.50€<br>
+                            • Tomates séchées, câpres, asperges +0.80€<br>
+                            • Anchois, aubergine, pomme de terre +1.00€<br>
+                            • Fromage +1.50€<br>
+                            • Viande +2.50€<br>
+                            • Baguette Fitness +0.50€
+                        </div>
+                    </div>
+                `;
+            } else if (categorie === 'Nos Tentaburgers') {
+                supplementsHTML = `
+                    <div style="margin-top: 20px; padding: 12px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px;">
+                        <strong style="color: #856404; font-size: 14px;">📋 Suppléments disponibles (à noter dans les commentaires) :</strong>
+                        <div style="margin-top: 8px; font-size: 13px; color: #856404; line-height: 1.6;">
+                            • Nos Burgers (en sandwich) - supplément viande burger +2.00€
+                        </div>
+                    </div>
+                `;
+            } else if (categorie === 'Nos croques') {
+                supplementsHTML = `
+                    <div style="margin-top: 20px; padding: 12px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px;">
+                        <strong style="color: #856404; font-size: 14px;">📋 Informations supplémentaires :</strong>
+                        <div style="margin-top: 8px; font-size: 13px; color: #856404; line-height: 1.6;">
+                            • + accompagnement bol crudité 2.00€<br>
+                            • + pot de sauce au choix 0.70€
+                        </div>
+                    </div>
+                `;
+            } else if (categorie === 'Nos Pasta\'s') {
+                supplementsHTML = `
+                    <div style="margin-top: 20px; padding: 12px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px;">
+                        <strong style="color: #856404; font-size: 14px;">📋 Suppléments disponibles (à noter dans les commentaires) :</strong>
+                        <div style="margin-top: 8px; font-size: 13px; color: #856404; line-height: 1.6;">
+                            • 6.50€ - FORMAT UNIQUE<br>
+                            • Supplément sauce +2.00€<br>
+                            • Supplément parmesan/Gruyère +1.00€
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (supplementsHTML) {
+                const supplementDiv = document.createElement('div');
+                supplementDiv.innerHTML = supplementsHTML;
+                list.appendChild(supplementDiv);
+            }
+        }
+
+        // Filtrer par catégorie
+        function filtrerParCategorie(categorie) {
+            categorieSelectionnee = categorie;
+
+            // Mettre à jour les boutons actifs
+            document.querySelectorAll('.category-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Réafficher les sandwichs
+            afficherSandwichs();
+        }
+
+        // Charger les responsables
+        async function chargerResponsables() {
+            try {
+                const response = await fetch(`${API_URL}/responsables`);
+                responsables = await response.json();
+                remplirListeResponsables();
+            } catch (error) {
+                console.error('Erreur lors du chargement des responsables:', error);
+            }
+        }
+
+        // Remplir la liste déroulante des responsables
+        function remplirListeResponsables() {
+            const select = document.getElementById('responsable-select');
+            // Garder l'option par défaut
+            select.innerHTML = '<option value="">-- Sélectionner --</option>';
+
+            responsables.forEach(responsable => {
+                const option = document.createElement('option');
+                option.value = responsable.id;
+                option.textContent = responsable.nom;
+                select.appendChild(option);
+            });
+        }
+
+        // Mettre à jour l'affichage du responsable
+        function updateResponsableDisplay() {
+            const select = document.getElementById('responsable-select');
+            const display = document.getElementById('responsable-display');
+
+            if (select.value) {
+                const responsable = responsables.find(r => r.id === parseInt(select.value));
+                if (responsable) {
+                    display.textContent = `(${responsable.nom})`;
+                }
+            } else {
+                display.textContent = '';
+            }
+        }
+
+        // Ajouter un sandwich à la sélection
+        function ajouterSandwich(sandwichId) {
+            const sandwich = sandwichs.find(s => s.id === sandwichId);
+            if (!sandwich) return;
+
+            selectedSandwichs.push({
+                sandwich_id: sandwichId,
+                nom: sandwich.nom,
+                prix: sandwich.prix,
+                personne: '',
+                commentaire: '',
+                paye: false
+            });
+
+            afficherSandwichsSelectionnes();
+            calculerTotal();
+        }
+
+        // Afficher les sandwichs sélectionnés
+        function afficherSandwichsSelectionnes() {
+            const section = document.getElementById('selected-section');
+            const list = document.getElementById('selected-sandwichs-list');
+            const totalSection = document.getElementById('total-section');
+
+            if (selectedSandwichs.length === 0) {
+                section.style.display = 'none';
+                totalSection.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            totalSection.style.display = 'flex';
+            list.innerHTML = '';
+
+            selectedSandwichs.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'selected-sandwich-compact';
+
+                // Créer la liste déroulante des responsables
+                let selectHTML = '<select class="compact-input" onchange="updatePersonne(' + index + ', this.value)">';
+                selectHTML += '<option value="">-- Sélectionner --</option>';
+                responsables.forEach(resp => {
+                    const selected = item.personne === resp.nom ? 'selected' : '';
+                    selectHTML += `<option value="${resp.nom}" ${selected}>${resp.nom}</option>`;
+                });
+                selectHTML += '</select>';
+
+                div.innerHTML = `
+                    <div class="compact-header">
+                        <div class="compact-name">${item.nom}</div>
+                        <div class="compact-prix">${item.prix.toFixed(2)} €</div>
+                    </div>
+                    ${selectHTML}
+                    <input type="text" class="compact-input" placeholder="Commentaire (30 car. max)" maxlength="30" onchange="updateCommentaire(${index}, this.value)" value="${item.commentaire}">
+                    <div class="compact-footer">
+                        <div class="compact-checkbox">
+                            <input type="checkbox" id="paye-${index}" onchange="updatePaye(${index}, this.checked)" ${item.paye ? 'checked' : ''}>
+                            <label for="paye-${index}">Payé</label>
+                        </div>
+                        <button class="remove-btn-compact" onclick="retirerSandwich(${index})">✕</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // Mettre à jour les informations
+        function updatePersonne(index, value) {
+            selectedSandwichs[index].personne = value;
+            // Si la commande existe déjà, mettre à jour en temps réel
+            if (selectedSandwichs[index].id) {
+                updateCommandeEnBDD(index);
+            }
+        }
+
+        function updateCommentaire(index, value) {
+            selectedSandwichs[index].commentaire = value;
+            // Si la commande existe déjà, mettre à jour en temps réel
+            if (selectedSandwichs[index].id) {
+                updateCommandeEnBDD(index);
+            }
+        }
+
+        function updatePaye(index, checked) {
+            selectedSandwichs[index].paye = checked;
+            // Si la commande existe déjà, mettre à jour en temps réel
+            if (selectedSandwichs[index].id) {
+                updateCommandeEnBDD(index);
+            }
+        }
+
+        // Mettre à jour une commande en base de données
+        async function updateCommandeEnBDD(index) {
+            const item = selectedSandwichs[index];
+            if (!item.id) return;
+
+            try {
+                await fetch(`${API_URL}/commandes/${item.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        personne: item.personne.trim(),
+                        commentaire: item.commentaire.trim(),
+                        paye: item.paye ? 1 : 0
+                    })
+                });
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour:', error);
+            }
+        }
+
+        // Retirer un sandwich
+        async function retirerSandwich(index) {
+            const item = selectedSandwichs[index];
+
+            // Si la commande existe en BDD, la supprimer
+            if (item.id) {
+                if (confirm('Voulez-vous vraiment supprimer cette commande ?')) {
+                    try {
+                        const password = prompt('Entrez le mot de passe (1234) :');
+                        if (password !== '1234') {
+                            alert('Mot de passe incorrect !');
+                            return;
+                        }
+
+                        await fetch(`${API_URL}/commandes/${item.id}`, { method: 'DELETE' });
+                    } catch (error) {
+                        console.error('Erreur lors de la suppression:', error);
+                        return;
+                    }
+                }  else {
+                    return;
+                }
+            }
+
+            selectedSandwichs.splice(index, 1);
+            afficherSandwichsSelectionnes();
+            calculerTotal();
+        }
+
+        // Charger les commandes du jour
+        async function chargerCommandesDuJour() {
+            try {
+                const date = new Date().toISOString().split('T')[0];
+                const response = await fetch(`${API_URL}/commandes`);
+                const allCommandes = await response.json();
+
+                // Filtrer les commandes du jour
+                const commandesDuJour = allCommandes.filter(c => c.date === date);
+
+                if (commandesDuJour.length === 0) {
+                    showMessage('Aucune commande pour aujourd\'hui', 'error');
+                    return;
+                }
+
+                // Réinitialiser et charger les commandes
+                selectedSandwichs = [];
+
+                // Récupérer le responsable de la première commande (toutes ont le même responsable pour un jour donné)
+                if (commandesDuJour.length > 0 && commandesDuJour[0].responsable) {
+                    const responsable = responsables.find(r => r.nom === commandesDuJour[0].responsable);
+                    if (responsable) {
+                        document.getElementById('responsable-select').value = responsable.id;
+                        updateResponsableDisplay();
+                    }
+                }
+
+                for (const commande of commandesDuJour) {
+                    // Trouver le sandwich correspondant
+                    const sandwich = sandwichs.find(s => s.nom === commande.sandwich);
+                    if (sandwich) {
+                        selectedSandwichs.push({
+                            id: commande.id,  // Important: stocker l'ID pour les modifications
+                            sandwich_id: sandwich.id,
+                            nom: sandwich.nom,
+                            prix: sandwich.prix,
+                            personne: commande.personne,
+                            commentaire: commande.commentaire || '',
+                            paye: commande.paye === 1
+                        });
+                    }
+                }
+
+                afficherSandwichsSelectionnes();
+                calculerTotal();
+                showMessage(`${commandesDuJour.length} commande(s) chargée(s) pour modification`, 'success');
+            } catch (error) {
+                showMessage('Erreur lors du chargement des commandes', 'error');
+                console.error(error);
+            }
+        }
+
+        // Calculer le total
+        function calculerTotal() {
+            let total = 0;
+            selectedSandwichs.forEach(item => {
+                total += item.prix;
+            });
+            document.getElementById('total').textContent = total.toFixed(2);
+        }
+
+        // Appliquer le paiement global
+        document.getElementById('paye-global')?.addEventListener('change', function() {
+            const checked = this.checked;
+            selectedSandwichs.forEach((item, index) => {
+                item.paye = checked;
+                const checkbox = document.getElementById(`paye-${index}`);
+                if (checkbox) checkbox.checked = checked;
+            });
+        });
+
+        // Valider la commande
+        async function validerCommande() {
+            if (selectedSandwichs.length === 0) {
+                showMessage('Veuillez sélectionner au moins un sandwich', 'error');
+                return;
+            }
+
+            // Vérifier que tous les sandwichs ont un nom
+            const manquants = selectedSandwichs.filter(s => !s.personne.trim());
+            if (manquants.length > 0) {
+                showMessage('Veuillez entrer le nom de la personne pour tous les sandwichs', 'error');
+                return;
+            }
+
+            const date = new Date().toISOString().split('T')[0];
+            const responsableId = document.getElementById('responsable-select').value;
+            const responsableIdValue = responsableId ? parseInt(responsableId) : null;
+
+            try {
+                let nouvelles = 0;
+                for (const item of selectedSandwichs) {
+                    // Ne créer que les nouvelles commandes (sans ID)
+                    if (!item.id) {
+                        await fetch(`${API_URL}/commandes`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                date: date,
+                                personne: item.personne.trim(),
+                                sandwich_id: item.sandwich_id,
+                                commentaire: item.commentaire.trim(),
+                                paye: item.paye ? 1 : 0,
+                                responsable_id: responsableIdValue
+                            })
+                        });
+                        nouvelles++;
+                    }
+                }
+
+                if (nouvelles > 0) {
+                    showMessage(`${nouvelles} nouvelle(s) commande(s) enregistrée(s) avec succès !`, 'success');
+                    // Générer et afficher le récapitulatif
+                    genererRecapitulatif();
+                } else {
+                    showMessage('Aucune nouvelle commande à enregistrer. Les modifications ont été sauvegardées automatiquement.', 'success');
+                }
+                resetForm();
+            } catch (error) {
+                showMessage('Erreur lors de l\'enregistrement de la commande', 'error');
+                console.error(error);
+            }
+        }
+
+        // Générer le récapitulatif de commande
+        async function genererRecapitulatif() {
+            try {
+                // Récupérer les commandes du jour
+                const date = new Date().toISOString().split('T')[0];
+                const response = await fetch(`${API_URL}/commandes`);
+                const allCommandes = await response.json();
+                const commandesDuJour = allCommandes.filter(c => c.date === date);
+
+                if (commandesDuJour.length === 0) {
+                    return;
+                }
+
+                // Grouper par sandwich et compter
+                const sandwichsGroupe = {};
+                commandesDuJour.forEach(commande => {
+                    const key = commande.sandwich;
+                    if (!sandwichsGroupe[key]) {
+                        sandwichsGroupe[key] = {
+                            nom: commande.sandwich,
+                            prix: commande.prix,
+                            quantite: 0,
+                            personnes: [],
+                            commentaires: []
+                        };
+                    }
+                    sandwichsGroupe[key].quantite++;
+                    sandwichsGroupe[key].personnes.push(commande.personne);
+                    if (commande.commentaire && commande.commentaire.trim()) {
+                        sandwichsGroupe[key].commentaires.push(commande.commentaire.trim());
+                    }
+                });
+
+                // Calculer le total
+                let totalGeneral = 0;
+                commandesDuJour.forEach(c => totalGeneral += c.prix);
+
+                // Générer le HTML
+                let html = '<div style="max-width: 800px; margin: 0 auto;">';
+                html += '<h3 style="margin-bottom: 10px; color: #667eea; font-size: 18px;">Commande du ' + new Date().toLocaleDateString('fr-FR', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'}) + '</h3>';
+
+                // Personne qui commande
+                if (commandesDuJour[0].responsable) {
+                    html += '<p style="font-size: 15px; font-weight: bold; margin-bottom: 10px;">Personne qui commande: ' + commandesDuJour[0].responsable + '</p>';
+                }
+
+                html += '<div style="background: #f8f9fa; padding: 10px; border-radius: 5px;">';
+
+                Object.values(sandwichsGroupe).forEach(item => {
+                    html += '<div style="margin-bottom: 8px; padding: 8px 10px; background: white; border-radius: 4px; border-left: 3px solid #667eea;">';
+                    html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
+                    html += '<strong style="font-size: 15px;">' + item.nom + ' <span style="font-size: 13px; color: #666;">(' + item.prix.toFixed(2) + '€)</span></strong>';
+                    html += '<span style="background: #667eea; color: white; padding: 3px 10px; border-radius: 15px; font-weight: bold; font-size: 14px;">x ' + item.quantite + '</span>';
+                    html += '</div>';
+
+                    // Afficher les prénoms
+                    html += '<div style="margin-top: 5px; font-size: 13px; color: #444;">';
+                    html += '<em>Pour:</em> ' + item.personnes.join(', ');
+                    html += '</div>';
+
+                    if (item.commentaires.length > 0) {
+                        html += '<div style="margin-top: 5px; font-size: 13px; color: #666;">';
+                        html += '<em>Commentaires:</em> ' + item.commentaires.join(', ');
+                        html += '</div>';
+                    }
+                    html += '</div>';
+                });
+
+                html += '</div>';
+                html += '<p style="margin-top: 12px; font-size: 15px;"><strong>Total: ' + commandesDuJour.length + ' sandwich(s) - ' + totalGeneral.toFixed(2) + ' €</strong></p>';
+
+                // Informations de contact Frameries
+                html += '<div style="margin-top: 20px; padding: 10px 15px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #667eea; font-size: 13px;">';
+                html += '<strong style="color: #667eea;">La Tentation - Frameries</strong> • ';
+                html += '📞 065/80.12.52 • 📧 LSTF7080@gmail.com • ';
+                html += '📍 49, rue des Alliés, 7080 Frameries<br>';
+                html += '<span style="font-size: 12px;">🕐 Lu-Ve: 8h30-15h • Sa: 9h30-15h</span>';
+                html += '</div>';
+
+                html += '</div>';
+
+                document.getElementById('recap-content').innerHTML = html;
+
+                // Afficher l'onglet récapitulatif
+                document.getElementById('recap-tab-button').style.display = 'inline-block';
+                switchTab('recapitulatif');
+            } catch (error) {
+                console.error('Erreur lors de la génération du récapitulatif:', error);
+            }
+        }
+
+        // Reset le formulaire
+        function resetForm() {
+            selectedSandwichs = [];
+            afficherSandwichsSelectionnes();
+            document.getElementById('paye-global').checked = false;
+            document.getElementById('responsable-select').value = '';
+            calculerTotal();
+        }
+
+        // Afficher un message
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Charger l'historique
+        async function chargerHistorique() {
+            try {
+                const response = await fetch(`${API_URL}/commandes`);
+                let historiqueData = await response.json();
+                afficherHistorique(historiqueData);
+            } catch (error) {
+                console.error('Erreur lors du chargement de l\'historique:', error);
+            }
+        }
+
+        // Afficher l'historique
+        function afficherHistorique(historiqueData) {
+            const tbody = document.getElementById('historique-body');
+            tbody.innerHTML = '';
+
+            const filterStatut = document.getElementById('filter-statut').value;
+            const filterPersonne = document.getElementById('filter-personne').value.toLowerCase();
+
+            let filteredData = historiqueData;
+
+            if (filterStatut === 'paye') {
+                filteredData = filteredData.filter(c => c.paye === 1);
+            } else if (filterStatut === 'non-paye') {
+                filteredData = filteredData.filter(c => c.paye === 0);
+            }
+
+            if (filterPersonne) {
+                filteredData = filteredData.filter(c => c.personne.toLowerCase().includes(filterPersonne));
+            }
+
+            // Grouper par date
+            const groupedByDate = {};
+            filteredData.forEach(commande => {
+                if (!groupedByDate[commande.date]) {
+                    groupedByDate[commande.date] = [];
+                }
+                groupedByDate[commande.date].push(commande);
+            });
+
+            // Afficher par date
+            Object.keys(groupedByDate).sort().reverse().forEach(date => {
+                // Calculer le total pour cette date
+                let totalDate = 0;
+                groupedByDate[date].forEach(c => totalDate += c.prix);
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="8" class="date-header">${new Date(date).toLocaleDateString('fr-FR', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})} - <span style="font-weight: bold; color: #764ba2;">Total: ${totalDate.toFixed(2)} €</span></td>`;
+                tbody.appendChild(tr);
+
+                groupedByDate[date].forEach(commande => {
+                    const tr = document.createElement('tr');
+                    const statutClass = commande.paye === 1 ? 'paye' : 'non-paye';
+                    const statutText = commande.paye === 1 ? 'Payé' : 'Non payé';
+
+                    tr.innerHTML = `
+                        <td></td>
+                        <td><strong>${commande.personne}</strong></td>
+                        <td>${commande.sandwich}</td>
+                        <td>${commande.prix.toFixed(2)} €</td>
+                        <td>${commande.commentaire || '-'}</td>
+                        <td>${commande.responsable || '-'}</td>
+                        <td><span class="status-badge ${statutClass}">${statutText}</span></td>
+                        <td class="action-buttons">
+                            ${commande.paye === 0
+                                ? `<button class="btn-small btn-success" onclick="marquerPaye(${commande.id})">Payé</button>`
+                                : `<button class="btn-small btn-danger" onclick="marquerNonPaye(${commande.id})">Non payé</button>`
+                            }
+                            <button class="btn-small btn-danger" onclick="demanderSuppression(${commande.id})">Suppr.</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        // Marquer comme payé
+        async function marquerPaye(id) {
+            try {
+                await fetch(`${API_URL}/commandes/${id}/payer`, { method: 'PUT' });
+                chargerHistorique();
+                chargerStats();
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        // Marquer comme non payé
+        async function marquerNonPaye(id) {
+            try {
+                await fetch(`${API_URL}/commandes/${id}/non-payer`, { method: 'PUT' });
+                chargerHistorique();
+                chargerStats();
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        // Demander suppression avec mot de passe
+        function demanderSuppression(id) {
+            commandeToDelete = id;
+            document.getElementById('password-modal').style.display = 'block';
+            document.getElementById('password-input').value = '';
+            document.getElementById('password-input').focus();
+        }
+
+        // Fermer la modal
+        function closeModal() {
+            document.getElementById('password-modal').style.display = 'none';
+            commandeToDelete = null;
+        }
+
+        // Confirmer la suppression
+        async function confirmDelete() {
+            const password = document.getElementById('password-input').value;
+
+            if (password !== '1234') {
+                alert('Mot de passe incorrect !');
+                return;
+            }
+
+            try {
+                await fetch(`${API_URL}/commandes/${commandeToDelete}`, { method: 'DELETE' });
+                closeModal();
+                chargerHistorique();
+                chargerStats();
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        // Charger les statistiques
+        async function chargerStats() {
+            try {
+                const response = await fetch(`${API_URL}/stats`);
+                const stats = await response.json();
+
+                document.getElementById('stat-non-paye').textContent = stats.total_non_paye.toFixed(2);
+                document.getElementById('stat-paye').textContent = stats.total_paye.toFixed(2);
+                document.getElementById('stat-total').textContent = stats.total_general.toFixed(2);
+            } catch (error) {
+                console.error('Erreur lors du chargement des statistiques:', error);
+            }
+        }
+
+        // Fermer la modal en cliquant à l'extérieur
+        window.onclick = function(event) {
+            const modal = document.getElementById('password-modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Validation avec Enter dans le mot de passe
+        document.getElementById('password-input')?.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                confirmDelete();
+            }
+        });
+    </script>
+</body>
+</html>
