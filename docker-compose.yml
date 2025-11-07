@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  sandwich-app:
+    build: .
+    container_name: sandwich-tentation
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persister la base de données SQLite sur l'hôte
+      - ./sandwichs.db:/app/sandwichs.db
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
