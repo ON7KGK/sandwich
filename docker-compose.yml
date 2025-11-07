@@ -7,8 +7,11 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      # Persister la base de données SQLite sur l'hôte
-      - ./sandwichs.db:/app/sandwichs.db
+      # Utiliser un volume Docker nommé pour la persistence
+      - sandwich-data:/app
     restart: unless-stopped
     environment:
       - FLASK_ENV=production
+
+volumes:
+  sandwich-data:
