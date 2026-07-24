@@ -295,10 +295,10 @@ def add_commande():
 
     return jsonify({'success': True, 'message': 'Commande ajoutée avec succès'})
 
-# API: Obtenir l'historique des commandes (15 derniers jours)
+# API: Obtenir l'historique des commandes (365 derniers jours)
 @app.route('/api/commandes', methods=['GET'])
 def get_commandes():
-    date_limite = (datetime.now() - timedelta(days=15)).strftime('%Y-%m-%d')
+    date_limite = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
 
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
@@ -493,7 +493,7 @@ def delete_responsable(id):
 # API: Obtenir les statistiques
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
-    date_limite = (datetime.now() - timedelta(days=15)).strftime('%Y-%m-%d')
+    date_limite = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
 
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()

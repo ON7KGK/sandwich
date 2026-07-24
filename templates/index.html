@@ -800,10 +800,10 @@
         <h1>Commande de sandwiches Tentation</h1>
 
         <div class="tabs">
-            <button class="tab-button active" onclick="switchTab('commander')">Commander</button>
-            <button class="tab-button" onclick="switchTab('historique')">Historique</button>
-            <button id="recap-tab-button" class="tab-button" onclick="switchTab('recapitulatif')" style="display: none;">Récapitulatif</button>
-            <button class="tab-button" onclick="switchTab('admin')">Admin</button>
+            <button class="tab-button active" data-tab="commander" onclick="switchTab('commander')">Commander</button>
+            <button class="tab-button" data-tab="historique" onclick="switchTab('historique')">Historique</button>
+            <button id="recap-tab-button" class="tab-button" data-tab="recapitulatif" onclick="switchTab('recapitulatif')">Récapitulatif</button>
+            <button class="tab-button" data-tab="admin" onclick="switchTab('admin')">Admin</button>
         </div>
 
         <!-- TAB COMMANDER -->
@@ -1055,13 +1055,17 @@
             document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
 
             document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
+            // Activer le bouton d'onglet correspondant (sans dépendre de event.target)
+            const tabButton = document.querySelector(`.tab-button[data-tab="${tabName}"]`);
+            if (tabButton) tabButton.classList.add('active');
 
             if (tabName === 'historique') {
                 chargerHistorique();
                 chargerStats();
             } else if (tabName === 'admin') {
                 switchAdminTab('sandwichs');
+            } else if (tabName === 'recapitulatif') {
+                genererRecapitulatif();
             }
         }
 
@@ -1507,6 +1511,32 @@
             });
         }
 
+        // Récupérer le nom du responsable (preneur de commande) sélectionné
+        function getResponsableNom() {
+            const select = document.getElementById('responsable-select');
+            if (!select || !select.value) return null;
+            const responsable = responsables.find(r => r.id === parseInt(select.value));
+            return responsable ? responsable.nom : null;
+        }
+
+        // Cocher automatiquement "Payé" pour les sandwichs de la personne qui commande.
+        // Le preneur paie la totalité à la Tentation : ses propres sandwichs sont donc
+        // déjà réglés, il se fait ensuite rembourser par les autres.
+        function appliquerPayeResponsable() {
+            const nomResp = getResponsableNom();
+            if (!nomResp) return;
+            let changed = false;
+            selectedSandwichs.forEach((item, index) => {
+                if (item.personne === nomResp && !item.paye) {
+                    item.paye = true;
+                    changed = true;
+                    // Si la commande existe déjà en BDD, la mettre à jour
+                    if (item.id) updateCommandeEnBDD(index);
+                }
+            });
+            if (changed) afficherSandwichsSelectionnes();
+        }
+
         // Mettre à jour l'affichage du responsable
         function updateResponsableDisplay() {
             const select = document.getElementById('responsable-select');
@@ -1520,6 +1550,9 @@
             } else {
                 display.textContent = '';
             }
+
+            // Cocher "Payé" pour les sandwichs de la personne qui commande
+            appliquerPayeResponsable();
         }
 
         // Ajouter un sandwich à la sélection
@@ -1595,6 +1628,8 @@
             if (selectedSandwichs[index].id) {
                 updateCommandeEnBDD(index);
             }
+            // Si cette personne est le preneur de commande, cocher "Payé" automatiquement
+            appliquerPayeResponsable();
         }
 
         function updateCommentaire(index, value) {
@@ -1706,6 +1741,8 @@
                 }
 
                 afficherSandwichsSelectionnes();
+                // Cocher "Payé" pour les sandwichs de la personne qui commande
+                appliquerPayeResponsable();
                 calculerTotal();
                 showMessage(`${commandesDuJour.length} commande(s) chargée(s) pour modification`, 'success');
             } catch (error) {
@@ -1722,16 +1759,6 @@
             });
             document.getElementById('total').textContent = total.toFixed(2);
         }
-
-        // Appliquer le paiement global
-        document.getElementById('paye-global')?.addEventListener('change', function() {
-            const checked = this.checked;
-            selectedSandwichs.forEach((item, index) => {
-                item.paye = checked;
-                const checkbox = document.getElementById(`paye-${index}`);
-                if (checkbox) checkbox.checked = checked;
-            });
-        });
 
         // Valider la commande
         async function validerCommande() {
@@ -1774,12 +1801,12 @@
 
                 if (nouvelles > 0) {
                     showMessage(`${nouvelles} nouvelle(s) commande(s) enregistrée(s) avec succès !`, 'success');
-                    // Générer et afficher le récapitulatif
-                    genererRecapitulatif();
                 } else {
-                    showMessage('Aucune nouvelle commande à enregistrer. Les modifications ont été sauvegardées automatiquement.', 'success');
+                    showMessage('Modifications enregistrées avec succès.', 'success');
                 }
                 resetForm();
+                // Afficher le récapitulatif de la commande du jour
+                switchTab('recapitulatif');
             } catch (error) {
                 showMessage('Erreur lors de l\'enregistrement de la commande', 'error');
                 console.error(error);
@@ -1796,6 +1823,8 @@
                 const commandesDuJour = allCommandes.filter(c => c.date === date);
 
                 if (commandesDuJour.length === 0) {
+                    document.getElementById('recap-content').innerHTML =
+                        '<p style="text-align:center; color:#666; font-size:16px; padding:20px;">Aucune commande enregistrée pour aujourd\'hui.</p>';
                     return;
                 }
 
@@ -1868,10 +1897,6 @@
                 html += '</div>';
 
                 document.getElementById('recap-content').innerHTML = html;
-
-                // Afficher l'onglet récapitulatif
-                document.getElementById('recap-tab-button').style.display = 'inline-block';
-                switchTab('recapitulatif');
             } catch (error) {
                 console.error('Erreur lors de la génération du récapitulatif:', error);
             }
@@ -1881,7 +1906,6 @@
         function resetForm() {
             selectedSandwichs = [];
             afficherSandwichsSelectionnes();
-            document.getElementById('paye-global').checked = false;
             document.getElementById('responsable-select').value = '';
             calculerTotal();
         }
